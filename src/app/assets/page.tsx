@@ -5,16 +5,19 @@ import { SectionTitle } from "@/components/section-title";
 import { useHoldings } from "@/lib/hooks";
 import { formatNumber, formatRmb } from "@/lib/utils";
 import { useMarket } from "@/components/market-provider";
+import { useMounted } from "@/lib/use-mounted";
 
 export default function AssetsPage() {
+  const mounted = useMounted();
   const { holdings } = useHoldings();
   const { currentSnapshot } = useMarket();
 
+  if (!mounted) {
+    return <div className="min-h-[240px] rounded-3xl border border-white/40 bg-white/70" />;
+  }
+
   const totalWeight = holdings.reduce((sum, item) => sum + item.weightG, 0);
-  const totalCost = holdings.reduce(
-    (sum, item) => sum + item.buyPriceRmbPerG * item.weightG + item.feeRmb,
-    0
-  );
+  const totalCost = holdings.reduce((sum, item) => sum + item.buyPriceRmbPerG * item.weightG, 0);
   const marketValue = currentSnapshot.priceRmbPerG * totalWeight;
   const profit = marketValue - totalCost;
 
@@ -55,20 +58,18 @@ export default function AssetsPage() {
               <th className="px-4 py-3">日期</th>
               <th className="px-4 py-3">买入价</th>
               <th className="px-4 py-3">克数</th>
-              <th className="px-4 py-3">手续费</th>
               <th className="px-4 py-3">成本</th>
               <th className="px-4 py-3">备注</th>
             </tr>
           </thead>
           <tbody>
             {holdings.map((item) => {
-              const cost = item.buyPriceRmbPerG * item.weightG + item.feeRmb;
+              const cost = item.buyPriceRmbPerG * item.weightG;
               return (
                 <tr key={item.id} className="border-t border-neutral-100 bg-white/90">
                   <td className="px-4 py-3 text-neutral-700">{item.boughtAt}</td>
                   <td className="px-4 py-3 text-neutral-700">{formatRmb(item.buyPriceRmbPerG)}/g</td>
                   <td className="px-4 py-3 text-neutral-700">{formatNumber(item.weightG, 2)} g</td>
-                  <td className="px-4 py-3 text-neutral-700">{formatRmb(item.feeRmb)}</td>
                   <td className="px-4 py-3 text-neutral-900">{formatRmb(cost)}</td>
                   <td className="px-4 py-3 text-neutral-500">{item.note ?? "--"}</td>
                 </tr>

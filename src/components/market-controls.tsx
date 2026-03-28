@@ -45,7 +45,9 @@ export function MarketControls() {
         >
           上海金
         </button>
-        <span className="text-xs text-neutral-500">更新于 {formatDateTime(lastUpdated)}</span>
+        <span className="text-xs text-neutral-500">
+          {lastUpdated ? `更新于 ${formatDateTime(lastUpdated)}` : "正在同步"}
+        </span>
       </div>
     </div>
   );

@@ -6,13 +6,19 @@ import { SectionTitle } from "@/components/section-title";
 import { useAlerts } from "@/lib/hooks";
 import { formatRmb } from "@/lib/utils";
 import { useMarket } from "@/components/market-provider";
+import { useMounted } from "@/lib/use-mounted";
 
 export default function AlertsPage() {
+  const mounted = useMounted();
   const { alerts } = useAlerts();
   const { market } = useMarket();
   const [permission, setPermission] = useState(
     typeof window !== "undefined" && "Notification" in window ? Notification.permission : "default"
   );
+
+  if (!mounted) {
+    return <div className="min-h-[240px] rounded-3xl border border-white/40 bg-white/70" />;
+  }
 
   const handlePermission = async () => {
     if (typeof window === "undefined" || !("Notification" in window)) {
@@ -59,7 +65,7 @@ export default function AlertsPage() {
           >
             <div>
               <p className="text-sm font-semibold text-neutral-900">
-                {alert.symbol === "XAU" ? "XAU/USD" : "上海金"} ≥ {formatRmb(alert.targetRmbPerG)}/g
+                {alert.symbol === "XAU" ? "XAU/USD" : "上海金"} 目标区间 {formatRmb(alert.targetMinRmbPerG)} - {formatRmb(alert.targetMaxRmbPerG)}/g
               </p>
               <p className="text-xs text-neutral-500">当前价 {formatRmb(latestBySymbol[alert.symbol])}/g</p>
             </div>

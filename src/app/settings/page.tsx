@@ -3,22 +3,27 @@
 import { useState } from "react";
 import { useSettings } from "@/lib/hooks";
 import type { AssetSymbol } from "@/lib/types";
+import { useMounted } from "@/lib/use-mounted";
 
 export default function SettingsPage() {
+  const mounted = useMounted();
   const { settings, setSettings } = useSettings();
 
   const [defaultSymbol, setDefaultSymbol] = useState<AssetSymbol>(settings.defaultSymbol);
   const [pollInterval, setPollInterval] = useState(settings.pollIntervalMs / 60000);
-  const [briefTime, setBriefTime] = useState(settings.briefTimeLocal);
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setSettings({
       defaultSymbol,
       pollIntervalMs: Math.max(1, Math.round(pollInterval)) * 60000,
-      briefTimeLocal: briefTime,
+      briefTimeLocal: settings.briefTimeLocal,
     });
   };
+
+  if (!mounted) {
+    return <div className="min-h-[240px] rounded-3xl border border-white/40 bg-white/70" />;
+  }
 
   return (
     <div className="mx-auto max-w-xl rounded-3xl border border-white/40 bg-white/80 p-6 shadow-lg shadow-amber-200/40">
@@ -46,15 +51,6 @@ export default function SettingsPage() {
             step={1}
             value={pollInterval}
             onChange={(event) => setPollInterval(Number(event.target.value))}
-          />
-        </label>
-        <label className="block text-sm">
-          <span className="text-neutral-700">AI 简报生成时间</span>
-          <input
-            className="mt-2 w-full rounded-xl border border-neutral-200 bg-white px-3 py-2"
-            type="time"
-            value={briefTime}
-            onChange={(event) => setBriefTime(event.target.value)}
           />
         </label>
         <button

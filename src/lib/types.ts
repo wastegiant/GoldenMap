@@ -25,7 +25,6 @@ export type Holding = {
   id: string;
   buyPriceRmbPerG: number;
   weightG: number;
-  feeRmb: number;
   boughtAt: string;
   note?: string;
 };
@@ -33,7 +32,8 @@ export type Holding = {
 export type Alert = {
   id: string;
   symbol: AssetSymbol;
-  targetRmbPerG: number;
+  targetMinRmbPerG: number;
+  targetMaxRmbPerG: number;
   active: boolean;
   createdAt: string;
   triggeredAt?: string;

@@ -29,6 +29,14 @@ function generateSeries(basePrice: number) {
   return points;
 }
 
+function generateStableSeries(basePrice: number) {
+  return Array.from({ length: 24 }, (_, index) => {
+    const time = `${String(index).padStart(2, "0")}:00`;
+    const offset = (index - 12) * 0.18;
+    return { time, priceRmbPerG: Number((basePrice + offset).toFixed(2)) };
+  });
+}
+
 function buildSnapshot(
   symbol: "XAU" | "SHG",
   options: {
@@ -53,6 +61,35 @@ function buildSnapshot(
     change24hPct: Number(change24hPct.toFixed(2)),
     updatedAt: Date.now(),
     series24h,
+  };
+}
+
+export function getInitialMarketState(): MarketState {
+  const usdCny = BASE_USD_CNY;
+  const xauUsd = BASE_XAU_USD;
+  const xauRmb = toRmbPerGFromUsdOz(xauUsd, usdCny);
+  const shgRmb = BASE_SHG_RMB;
+
+  return {
+    xau: {
+      symbol: "XAU",
+      label: "XAU/USD",
+      priceRmbPerG: Number(xauRmb.toFixed(2)),
+      priceUsdPerOz: Number(xauUsd.toFixed(2)),
+      usdCny,
+      change24hPct: 0.35,
+      updatedAt: 0,
+      series24h: generateStableSeries(xauRmb),
+    },
+    shg: {
+      symbol: "SHG",
+      label: "上海金",
+      priceRmbPerG: Number(shgRmb.toFixed(2)),
+      usdCny,
+      change24hPct: -0.18,
+      updatedAt: 0,
+      series24h: generateStableSeries(shgRmb),
+    },
   };
 }
 

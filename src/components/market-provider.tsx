@@ -2,7 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import type { AssetSymbol, MarketSnapshot, MarketState } from "@/lib/types";
-import { getMockMarketState } from "@/lib/mock";
+import { getInitialMarketState, getMockMarketState } from "@/lib/mock";
 import { useAlerts, useSettings } from "@/lib/hooks";
 import { useToast } from "@/components/toast-provider";
 
@@ -23,9 +23,9 @@ export function MarketProvider({ children }: { children: React.ReactNode }) {
   const { alerts, updateAlert } = useAlerts();
   const { addToast } = useToast();
 
-  const [market, setMarket] = useState<MarketState>(() => getMockMarketState());
+  const [market, setMarket] = useState<MarketState>(() => getInitialMarketState());
   const [selectedSymbolState, setSelectedSymbolState] = useState<AssetSymbol>(settings.defaultSymbol);
-  const [lastUpdated, setLastUpdated] = useState<number>(() => Date.now());
+  const [lastUpdated, setLastUpdated] = useState<number>(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const lastManualRefreshRef = useRef(0);
 
@@ -52,6 +52,10 @@ export function MarketProvider({ children }: { children: React.ReactNode }) {
   );
 
   useEffect(() => {
+    refreshMarket("auto");
+  }, [refreshMarket]);
+
+  useEffect(() => {
     const timer = setInterval(() => refreshMarket("auto"), settings.pollIntervalMs);
     return () => clearInterval(timer);
   }, [refreshMarket, settings.pollIntervalMs]);
@@ -68,7 +72,9 @@ export function MarketProvider({ children }: { children: React.ReactNode }) {
           return;
         }
         const snapshot = snapshotBySymbol[alert.symbol];
-        if (snapshot.priceRmbPerG >= alert.targetRmbPerG) {
+        const min = Math.min(alert.targetMinRmbPerG, alert.targetMaxRmbPerG);
+        const max = Math.max(alert.targetMinRmbPerG, alert.targetMaxRmbPerG);
+        if (snapshot.priceRmbPerG >= min && snapshot.priceRmbPerG <= max) {
           updateAlert(alert.id, (prev) => ({
             ...prev,
             active: false,
@@ -77,16 +83,26 @@ export function MarketProvider({ children }: { children: React.ReactNode }) {
 
           addToast({
             title: `${snapshot.label} 触达提醒`,
-            description: `当前价 ${snapshot.priceRmbPerG.toFixed(2)} 元/克 ≥ 目标价 ${alert.targetRmbPerG} 元/克`,
+            description: `当前价 ${snapshot.priceRmbPerG.toFixed(2)} 元/克 ∈ 区间 ${min}-${max} 元/克`,
           });
 
           if (typeof window !== "undefined" && "Notification" in window) {
             if (Notification.permission === "granted") {
               new Notification("GoldMate 价格提醒", {
-                body: `${snapshot.label} 达到 ${alert.targetRmbPerG} 元/克`,
+                body: `${snapshot.label} 达到区间 ${min}-${max} 元/克`,
               });
             }
           }
+
+          fetch("/api/feishu", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              text: `GoldMate 价格提醒：${snapshot.label} 当前价 ${snapshot.priceRmbPerG.toFixed(
+                2
+              )} 元/克，已进入目标区间 ${min}-${max} 元/克。`,
+            }),
+          }).catch(() => {});
         }
       });
     };

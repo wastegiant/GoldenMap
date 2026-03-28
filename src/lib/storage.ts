@@ -19,7 +19,6 @@ export const defaultHoldings: Holding[] = [
     id: "seed_001",
     buyPriceRmbPerG: 498.5,
     weightG: 12.4,
-    feeRmb: 15,
     boughtAt: "2026-03-01",
     note: "首批试运行持仓",
   },
@@ -27,7 +26,6 @@ export const defaultHoldings: Holding[] = [
     id: "seed_002",
     buyPriceRmbPerG: 505.2,
     weightG: 8.1,
-    feeRmb: 12,
     boughtAt: "2026-03-08",
   },
 ];
@@ -36,7 +34,8 @@ export const defaultAlerts: Alert[] = [
   {
     id: "alert_001",
     symbol: "XAU",
-    targetRmbPerG: 520,
+    targetMinRmbPerG: 520,
+    targetMaxRmbPerG: 520,
     active: true,
     createdAt: "2026-03-10",
   },

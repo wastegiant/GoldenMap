@@ -1,27 +1,31 @@
 ﻿"use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useHoldings } from "@/lib/hooks";
 import { uid } from "@/lib/utils";
+import { useMarket } from "@/components/market-provider";
 
 export default function NewAssetPage() {
   const router = useRouter();
   const { addHolding } = useHoldings();
 
-  const [buyPrice, setBuyPrice] = useState(500);
-  const [weight, setWeight] = useState(5);
-  const [fee, setFee] = useState(10);
+  const { currentSnapshot } = useMarket();
+  const [buyPrice, setBuyPrice] = useState(currentSnapshot.priceRmbPerG.toFixed(2));
+  const [weight, setWeight] = useState("");
   const [boughtAt, setBoughtAt] = useState(new Date().toISOString().slice(0, 10));
   const [note, setNote] = useState("");
+
+  useEffect(() => {
+    setBuyPrice(currentSnapshot.priceRmbPerG.toFixed(2));
+  }, [currentSnapshot.priceRmbPerG]);
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     addHolding({
       id: uid("holding"),
       buyPriceRmbPerG: Number(buyPrice),
-      weightG: Number(weight),
-      feeRmb: Number(fee),
+      weightG: Number(weight || 0),
       boughtAt,
       note: note.trim() || undefined,
     });
@@ -31,7 +35,7 @@ export default function NewAssetPage() {
   return (
     <div className="mx-auto max-w-xl rounded-3xl border border-white/40 bg-white/80 p-6 shadow-lg shadow-amber-200/40">
       <h2 className="text-xl font-semibold text-neutral-900">新增买入记录</h2>
-      <p className="mt-2 text-sm text-neutral-500">录入买入价、克数与手续费，系统自动计算盈亏。</p>
+      <p className="mt-2 text-sm text-neutral-500">录入买入价与克数，系统自动计算盈亏。</p>
 
       <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
         <label className="block text-sm">
@@ -42,7 +46,7 @@ export default function NewAssetPage() {
             min={0}
             step={0.01}
             value={buyPrice}
-            onChange={(event) => setBuyPrice(Number(event.target.value))}
+            onChange={(event) => setBuyPrice(event.target.value)}
           />
         </label>
         <label className="block text-sm">
@@ -53,18 +57,7 @@ export default function NewAssetPage() {
             min={0}
             step={0.01}
             value={weight}
-            onChange={(event) => setWeight(Number(event.target.value))}
-          />
-        </label>
-        <label className="block text-sm">
-          <span className="text-neutral-700">手续费 (元)</span>
-          <input
-            className="mt-2 w-full rounded-xl border border-neutral-200 bg-white px-3 py-2"
-            type="number"
-            min={0}
-            step={0.01}
-            value={fee}
-            onChange={(event) => setFee(Number(event.target.value))}
+            onChange={(event) => setWeight(event.target.value)}
           />
         </label>
         <label className="block text-sm">
@@ -105,4 +98,3 @@ export default function NewAssetPage() {
     </div>
   );
 }
-

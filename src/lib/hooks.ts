@@ -46,6 +46,27 @@ export function useAlerts() {
     defaultAlerts
   );
 
+  useEffect(() => {
+    const hasLegacy = alerts.some(
+      (alert) => (alert as Alert & { targetRmbPerG?: number }).targetRmbPerG !== undefined
+    );
+    if (!hasLegacy) {
+      return;
+    }
+    const normalized = alerts.map((alert) => {
+      const legacy = alert as Alert & { targetRmbPerG?: number };
+      if (legacy.targetRmbPerG !== undefined) {
+        return {
+          ...alert,
+          targetMinRmbPerG: legacy.targetRmbPerG,
+          targetMaxRmbPerG: legacy.targetRmbPerG,
+        };
+      }
+      return alert;
+    });
+    setAlerts(normalized);
+  }, [alerts, setAlerts]);
+
   const addAlert = (alert: Alert) => {
     setAlerts((prev) => [alert, ...prev]);
   };
